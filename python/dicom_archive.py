@@ -204,7 +204,7 @@ if db is not None:
 
     archive = lib.dicom.dicom_database.get_archive_with_study_uid(db, summary.info.study_uid)
 
-    if db_insert and  archive is not None:
+    if db_insert and archive is not None:
         print_error_exit(
             (
                 f'Study \'{summary.info.study_uid}\' is already inserted in the database\n'
