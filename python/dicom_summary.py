@@ -17,10 +17,15 @@ parser.add_argument(
     'directory',
     help='The DICOM directory')
 
+parser.add_argument(
+    '--verbose',
+    action='store_true',
+    help='Set the script to be verbose')
+
 args = parser.parse_args()
 
 try:
-    summary = lib.dicom.summary_make.make(args.directory)
+    summary = lib.dicom.summary_make.make(args.directory, args.verbose)
 except Exception as e:
     print(f'ERROR: Cannot create a summary for the directory \'{args.directory}\'.', file=sys.stderr)
     print('Exception message:', file=sys.stderr)
