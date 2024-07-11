@@ -662,7 +662,7 @@ class NiftiInsertionPipeline(BasePipeline):
             'PhaseEncodingDirection': phase_enc_dir,
             'CoordinateSpace': 'native',
             'OutputType': 'native',
-            'AcquisitionProtocolID': self.scan_type_id,
+            'MriScanTypeID': self.scan_type_id,
             'FileType': file_type,
             'InsertedByUserID': getpass.getuser(),
             'InsertTime': datetime.datetime.now().timestamp(),

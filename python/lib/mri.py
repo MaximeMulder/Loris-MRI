@@ -130,7 +130,7 @@ class Mri:
                 if len(cohort_info) > 0:
                     self.cohort_id = cohort_info[0]['CohortID']
             break
-        
+
         self.session_id      = self.get_loris_session_id()
 
         # grep all the NIfTI files for the modality
@@ -139,7 +139,7 @@ class Mri:
         # check if a tsv with acquisition dates or age is available for the subject
         self.scans_file = None
         if self.bids_layout.get(suffix='scans', subject=self.psc_id, return_type='filename'):
-            self.scans_file = self.bids_layout.get(suffix='scans', subject=self.psc_id, 
+            self.scans_file = self.bids_layout.get(suffix='scans', subject=self.psc_id,
                                                    return_type='filename', extension='tsv')[0]
 
         # loop through NIfTI files and register them in the DB
@@ -368,7 +368,7 @@ class Mri:
             scan_type_id = self.db.grep_id_from_lookup_table(
                 id_field_name       = 'ID',
                 table_name          = 'mri_scan_type',
-                where_field_name    = 'Scan_type',
+                where_field_name    = 'Name',
                 where_value         = scan_type,
                 insert_if_not_found = True
             )
@@ -392,7 +392,7 @@ class Mri:
                 'PhaseEncodingDirection': phase_enc_dir,
                 'EchoNumber'      : echo_nb,
                 'SourceFileID'    : None,
-                'AcquisitionProtocolID': scan_type_id
+                'MriScanTypeID'   : scan_type_id
             }
             file_id = imaging.insert_imaging_file(file_info, file_parameters)
 

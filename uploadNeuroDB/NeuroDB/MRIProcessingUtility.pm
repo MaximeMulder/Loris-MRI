@@ -1377,8 +1377,8 @@ sub registerScanIntoDB {
         && (!defined($extra_validation_status) || $extra_validation_status !~ /exclude/)) {
 
         $${minc_file}->setFileData(
-            'AcquisitionProtocolID',
-             $acquisitionProtocolID
+            'MriScanTypeID',
+            $acquisitionProtocolID
         );
 
         $message = "\nAcq protocol: $acquisitionProtocol "
@@ -2129,9 +2129,9 @@ sub computeSNR {
     my @modalities = $configOB->getComputeSnrModalities();
 
     (my $query = <<QUERY) =~ s/\n//gm;
-  SELECT    FileID, File, Scan_type
+  SELECT    FileID, File, mst.Name AS ScanType
   FROM      files f
-  JOIN      mri_scan_type mst ON (mst.ID=f.AcquisitionProtocolID)
+  JOIN      mri_scan_type mst ON (mst.ID=f.MriScanTypeID)
   WHERE     f.TarchiveSource=?
 QUERY
     print $query . "\n" if ($this->{debug});
@@ -2140,7 +2140,7 @@ QUERY
     while (my $row = $minc_file_arr->fetchrow_hashref()) {
         my $filename     = $row->{'File'};
         my $fileID       = $row->{'FileID'};
-        my $fileScanType = $row->{'Scan_type'};
+        my $fileScanType = $row->{'ScanType'};
         my $base         = basename($filename);
         my $fullpath     = "$data_dir/$filename";
         my $message;
@@ -2194,7 +2194,7 @@ sub orderModalitiesByAcq {
     my ($file, $acqProtID, $dataArr, $message, $sth);
     my ($tarchiveID, $upload_id)= @_;
 
-    my $queryAcqProt = "SELECT DISTINCT f.AcquisitionProtocolID ".
+    my $queryAcqProt = "SELECT DISTINCT f.MriScanTypeID ".
                         "FROM files f ".
                         "WHERE f.TarchiveSource=?";
 
@@ -2204,13 +2204,13 @@ sub orderModalitiesByAcq {
 
     my $acqArr = ${$this->{'dbhr'}}->prepare($queryAcqProt);
     $acqArr->execute($tarchiveID);
-    # For each of the files having this AcquisitionProtocolID
+    # For each of the files having this MriScanTypeID
     # load the file object to get the series_number
     while (my $rowAcqProt = $acqArr->fetchrow_hashref()) {
-        $acqProtID = $rowAcqProt->{'AcquisitionProtocolID'};
+        $acqProtID = $rowAcqProt->{'MriScanTypeID'};
         my $queryDataArr = "SELECT f.FileID, f.AcqOrderPerModality ".
                             "FROM files f ".
-                            "WHERE f.TarchiveSource=? AND f.AcquisitionProtocolID=?";
+                            "WHERE f.TarchiveSource=? AND f.MriScanTypeID=?";
 
         if ($this->{debug}) {
             print $queryDataArr . "\n";

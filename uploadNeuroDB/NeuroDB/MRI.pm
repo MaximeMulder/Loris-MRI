@@ -642,7 +642,7 @@ sub scan_type_id_to_text {
 
     my $mriScanTypeRef = $mriScanTypeOB->get(0, { ID => $typeID });
 
-    return $mriScanTypeRef->[0]->{'Scan_type'};
+    return $mriScanTypeRef->[0]->{'Name'};
 }
 
 =pod
@@ -666,7 +666,7 @@ sub scan_type_text_to_id {
         db => $db
     );
     my $mriScanTypeRef = $mriScanTypeOB->get(
-        0, { Scan_type => $type }
+        0, { Name => $type }
     );
 
     return @$mriScanTypeRef ? $mriScanTypeRef->[0]->{'ID'} : undef;
@@ -784,7 +784,7 @@ sub register_db {
     my $query = "INSERT INTO files SET ";
     my @field_array = (
         'File',            'SessionID',        'EchoTime',
-        'CoordinateSpace', 'OutputType',       'AcquisitionProtocolID',
+        'CoordinateSpace', 'OutputType',       'MriScanTypeID',
         'FileType',        'InsertedByUserID', 'Caveat',
         'SeriesUID',       'TarchiveSource',   'HrrtArchiveID',
         'SourcePipeline',  'PipelineDate',     'SourceFileID',
@@ -1375,7 +1375,7 @@ sub make_pics {
     $sth->execute();
     my $rowhr = $sth->fetchrow_hashref();
 
-    my $acquisitionProtocol = scan_type_id_to_text($file->getFileDatum('AcquisitionProtocolID'), $db);
+    my $acquisitionProtocol = scan_type_id_to_text($file->getFileDatum('MriScanTypeID'), $db);
     my $minc = $data_dir . '/' . $file->getFileDatum('File');
     my $mincbase = basename($minc);
     $mincbase =~ s/\.mnc(\.gz)?$//;
