@@ -1,5 +1,6 @@
 from functools import cmp_to_key
 import os
+import glob
 import pydicom
 import pydicom.errors
 from lib.dicom.summary_type import Summary, Info, Patient, Scanner, Acquisition, DicomFile, OtherFile
@@ -10,6 +11,7 @@ def get_value(dicom: pydicom.Dataset, tag: str):
     """
     Get a required value from a DICOM.
     """
+
     if tag not in dicom:
         raise Exception(f'Expected DICOM tag \'{tag}\' but found none.')
 
@@ -20,6 +22,7 @@ def get_value_none(dicom: pydicom.Dataset, tag: str):
     """
     Get a nullable value from a DICOM.
     """
+
     if tag not in dicom:
         return None
 
@@ -29,7 +32,10 @@ def get_value_none(dicom: pydicom.Dataset, tag: str):
 def cmp_int_none(a: int | None, b: int | None):
     """
     Order comparison between two nullable integers.
+    The returned value is in accordance with `functools.cmp_to_key`.
+    https://docs.python.org/3/library/functools.html#functools.cmp_to_key
     """
+
     match a, b:
         case None, None:
             return 0
@@ -44,7 +50,10 @@ def cmp_int_none(a: int | None, b: int | None):
 def cmp_string_none(a: str | None, b: str | None):
     """
     Order comparison between two nullable strings.
+    The returned value is in accordance with `functools.cmp_to_key`.
+    https://docs.python.org/3/library/functools.html#functools.cmp_to_key
     """
+
     match a, b:
         case None, None:
             return 0
@@ -64,6 +73,7 @@ def cmp_files(a: DicomFile, b: DicomFile):
     """
     Compare the order of two files to sort them in the summary.
     """
+
     return \
         cmp_int_none(a.series_number, b.series_number) or \
         cmp_int_none(a.file_number, b.file_number) or \
@@ -74,24 +84,11 @@ def cmp_acquis(a: Acquisition, b: Acquisition):
     """
     Compare the order of two acquisitions to sort them in the summary.
     """
+
     return \
         a.series_number - b.series_number or \
         cmp_string_none(a.sequence_name, b.sequence_name)
 
-
-def get_dir_files(prefix: str, path: str) -> list[str]:
-    """
-    Recursively get the files of a directory.
-    """
-    if os.path.isdir(prefix + '/' + path):
-        files = []
-        for file in os.listdir(prefix + '/' + path):
-            files += get_dir_files(prefix, path + '/' + file)
-
-        # Flatten the lists of files
-        return files
-
-    return [path]
 
 def make(dir_path: str, verbose: bool):
     """
@@ -103,7 +100,7 @@ def make(dir_path: str, verbose: bool):
     other_files: list[OtherFile] = []
     acquis_dict: dict[tuple[int, int | None, str | None], Acquisition] = dict()
 
-    file_names = get_dir_files(dir_path, '')
+    file_names = glob.glob('**/*', root_dir=dir_path, recursive=True)
     for i, file_name in enumerate(file_names):
         if verbose:
             print(f'Processing file \'{file_name}\' ({i + 1}/{len(file_names)})')

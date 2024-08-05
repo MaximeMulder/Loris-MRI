@@ -29,7 +29,7 @@ def print_warning(message: str):
 
 def check_create_file(path: str):
     if os.path.exists(path):
-        if overwrite:
+        if arg_overwrite:
             print_warning(f'Overwriting \'{path}\'')
         else:
             print_error_exit(
@@ -135,37 +135,37 @@ args = parser.parse_args()
 
 # Typed arguments
 
-profile:   str | None = args.profile
-source:    str        = args.source
-target:    str        = args.target
-verbose:   bool       = args.verbose
-today:     bool       = args.today
-year:      bool       = args.year
-overwrite: bool       = args.overwrite
-db_insert: bool       = args.db_insert
-db_update: bool       = args.db_update
+arg_profile:   str | None = args.profile
+arg_source:    str        = args.source
+arg_target:    str        = args.target
+arg_verbose:   bool       = args.verbose
+arg_today:     bool       = args.today
+arg_year:      bool       = args.year
+arg_overwrite: bool       = args.overwrite
+arg_db_insert: bool       = args.db_insert
+arg_db_update: bool       = args.db_update
 
 # Check arguments
 
-if db_insert and db_update:
+if arg_db_insert and arg_db_update:
     print_error_exit(
         'Arguments \'--db-insert\' and \'--db-update\' must not be set both at the same time.',
         lib.exitcode.INVALID_ARG,
     )
 
-if (db_insert or db_update) and not profile:
+if (arg_db_insert or arg_db_update) and not arg_profile:
     print_error_exit(
         'Argument \'--profile\' must be set when a \'--db-*\' argument is set.',
         lib.exitcode.INVALID_ARG,
     )
 
-if not os.path.isdir(source) or not os.access(source, os.R_OK):
+if not os.path.isdir(arg_source) or not os.access(arg_source, os.R_OK):
     print_error_exit(
         'Argument \'--source\' must be a readable directory path.',
         lib.exitcode.INVALID_ARG,
     )
 
-if not os.path.isdir(target) or not os.access(target, os.W_OK):
+if not os.path.isdir(arg_target) or not os.access(arg_target, os.W_OK):
     print_error_exit(
         'Argument \'--target\' must be a writable directory path.',
         lib.exitcode.INVALID_ARG,
@@ -174,21 +174,21 @@ if not os.path.isdir(target) or not os.access(target, os.W_OK):
 # Connect to database (if needed)
 
 db = None
-if profile is not None:
-    db = Database(load_config_file(profile).mysql, False)
+if arg_profile is not None:
+    db = Database(load_config_file(arg_profile).mysql, False)
     db.connect()
 
 # Check paths
 
-while source.endswith('/'):
-    source = source[:-1]
+while arg_source.endswith('/'):
+    arg_source = arg_source[:-1]
 
-base_name = os.path.basename(source)
+base_name = os.path.basename(arg_source)
 
-tar_path     = f'{target}/{base_name}.tar'
-zip_path     = f'{target}/{base_name}.tar.gz'
-summary_path = f'{target}/{base_name}.meta'
-log_path     = f'{target}/{base_name}.log'
+tar_path     = f'{arg_target}/{base_name}.tar'
+zip_path     = f'{arg_target}/{base_name}.tar.gz'
+summary_path = f'{arg_target}/{base_name}.meta'
+log_path     = f'{arg_target}/{base_name}.log'
 
 check_create_file(tar_path)
 check_create_file(zip_path)
@@ -197,14 +197,14 @@ check_create_file(log_path)
 
 print('Extracting DICOM information (may take a long time)')
 
-summary = lib.dicom.summary_make.make(source, verbose)
+summary = lib.dicom.summary_make.make(arg_source, arg_verbose)
 
 if db is not None:
     print('Checking database presence')
 
     archive = lib.dicom.dicom_database.get_archive_with_study_uid(db, summary.info.study_uid)
 
-    if db_insert and archive is not None:
+    if arg_db_insert and archive is not None:
         print_error_exit(
             (
                 f'Study \'{summary.info.study_uid}\' is already inserted in the database\n'
@@ -214,7 +214,7 @@ if db is not None:
             lib.exitcode.INSERT_FAILURE,
         )
 
-    if db_update and archive is None:
+    if arg_db_update and archive is None:
         print_error_exit(
             f'No study \'{summary.info.study_uid}\' found in the database',
             lib.exitcode.UPDATE_FAILURE,
@@ -226,8 +226,8 @@ else:
 print('Copying into DICOM tar')
 
 with tarfile.open(tar_path, 'w') as tar:
-    for file in os.listdir(source):
-        tar.add(source + '/' + file)
+    for file in os.listdir(arg_source):
+        tar.add(arg_source + '/' + file)
 
 print('Calculating DICOM tar MD5 sum')
 
@@ -245,24 +245,20 @@ zipball_md5_sum = lib.dicom.text.make_hash(zip_path, True)
 
 print('Getting DICOM scan date')
 
-if not today and summary.info.scan_date is None:
+if not arg_today and summary.info.scan_date is None:
     print_warning((
-        'No scan date found for this DICOM archive, '
-        'consider using argument \'--today\' to use today\'s date instead.'
+        'No scan date was found in the DICOMs, '
+        'consider using argument \'--today\' to use today\'s date as the scan date.'
     ))
 
-scan_date = date.today() if today else summary.info.scan_date
+if arg_year and summary.info.scan_date is None:
+    print_warning((
+        'Argument \'--year\' was provided but no scan date was found in the DICOMs, '
+        'the argument will be ignored.'
+    ))
 
-if year:
-    if not scan_date:
-        print_error_exit(
-            'Cannot use year directory with no date found for this DICOM archive.',
-            lib.exitcode.CREATE_DIR_FAILURE,
-        )
-
-    scan_date = cast(date, scan_date)
-
-    dir_path = f'{target}/{scan_date.year}'
+if arg_year and summary.info.scan_date is not None:
+    dir_path = f'{arg_target}/{summary.info.scan_date.year}'
     if not os.path.exists(dir_path):
         print(f'Creating directory \'{dir_path}\'')
         os.mkdir(dir_path)
@@ -272,16 +268,19 @@ if year:
             lib.exitcode.CREATE_DIR_FAILURE,
         )
 else:
-    dir_path = target
+    dir_path = arg_target
 
-scan_date_string = lib.dicom.text.write_date_none(scan_date) or ''
-archive_path = f'{dir_path}/DCM_{scan_date_string}_{base_name}.tar'
+if summary.info.scan_date is not None:
+    scan_date_string = lib.dicom.text.write_date(summary.info.scan_date)
+    archive_path = f'{dir_path}/DCM_{scan_date_string}_{base_name}.tar'
+else:
+    archive_path = f'{dir_path}/DCM_{base_name}.tar'
 
 check_create_file(archive_path)
 
-log = lib.dicom.dicom_log.make(source, archive_path, tarball_md5_sum, zipball_md5_sum)
+log = lib.dicom.dicom_log.make(arg_source, archive_path, tarball_md5_sum, zipball_md5_sum)
 
-if verbose:
+if arg_verbose:
     print('The archive will be created with the following arguments:')
     print(lib.dicom.dicom_log.write_to_string(log))
 
@@ -311,12 +310,12 @@ print('Calculating DICOM tar MD5 sum')
 
 log.archive_md5_sum = lib.dicom.text.make_hash(log.target_path, True)
 
-if db_insert:
+if arg_db_insert:
     # `db` cannot be `None` here.
     db = cast(Database, db)
     lib.dicom.dicom_database.insert(db, log, summary)
 
-if db_update:
+if arg_db_update:
     # `db` and `archive` cannot be `None` here.
     db = cast(Database, db)
     archive = cast(tuple[Any, Any], archive)

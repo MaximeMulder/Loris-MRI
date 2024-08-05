@@ -3,7 +3,7 @@ from typing import Any
 
 from lib.database import Database
 from lib.dicom.summary_type import Summary
-from lib.dicom.dicom_log import Log
+from lib.dicom.dicom_log import DicomArchiveLog
 import lib.dicom.text
 import lib.dicom.summary_write
 import lib.dicom.dicom_log
@@ -123,7 +123,7 @@ def get_archive_with_study_uid(db: Database, study_uid: str):
     return results[0]['TarchiveID'], results[0]['CreateInfo']
 
 
-def get_dicom_dict(log: Log, summary: Summary):
+def get_dicom_dict(log: DicomArchiveLog, summary: Summary):
     return {
         'DicomArchiveID': summary.info.study_uid,
         'PatientID': summary.info.patient.id,
@@ -158,7 +158,7 @@ def get_dicom_dict(log: Log, summary: Summary):
     }
 
 
-def insert(db: Database, log: Log, summary: Summary):
+def insert(db: Database, log: DicomArchiveLog, summary: Summary):
     """
     Insert a DICOM archive into the database.
 
@@ -209,7 +209,7 @@ def insert_files_series(db: Database, archive_id: int, summary: Summary):
         })
 
 
-def update(db: Database, archive_id: int, log: Log, summary: Summary):
+def update(db: Database, archive_id: int, log: DicomArchiveLog, summary: Summary):
     """
     Insert a DICOM archive into the database.
 

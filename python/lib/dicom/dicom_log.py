@@ -4,7 +4,7 @@ import socket
 from lib.dicom.text_dict import DictWriter
 
 
-class Log:
+class DicomArchiveLog:
     """
     DICOM archiving log object, containg information about the archiving of a
     DICOM directory.
@@ -49,7 +49,7 @@ class Log:
         self.archive_md5_sum = archive_md5_sum
 
 
-def write_to_string(log: Log):
+def write_to_string(log: DicomArchiveLog):
     """
     Serialize a DICOM archiving log object into a string.
     """
@@ -68,7 +68,7 @@ def write_to_string(log: Log):
     ]).write()
 
 
-def write_to_file(file_path: str, log: Log):
+def write_to_file(file_path: str, log: DicomArchiveLog):
     """
     Serialize a DICOM archiving log object into a text file.
     """
@@ -82,15 +82,15 @@ def make(source: str, target: str, tarball_md5_sum: str, zipball_md5_sum: str):
     Create a DICOM archiving log object from the provided arguments on a DICOM
     directory, as well as the current execution environment.
     """
-    return Log(
+    return DicomArchiveLog(
         source,
         target,
         socket.gethostname(),
         os.uname().sysname,
         os.environ['USER'],
         datetime.strftime(datetime.now(), '%Y-%m-%d %H:%M:%S'),
-        1,
-        1,
+        2,
+        2,
         tarball_md5_sum,
         zipball_md5_sum,
         'Provided in database only',
