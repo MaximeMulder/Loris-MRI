@@ -25,8 +25,6 @@ def print_warning(message: str):
     print(f'WARNING: {message}', file=sys.stderr)
 
 
-# Check arguments
-
 def main():
     def check_create_file(path: str):
         if os.path.exists(path):
@@ -117,6 +115,8 @@ def main():
     arg_db_update: bool       = loris_getopt_obj.options_dict['profile']['db-upload']
 
     db = loris_getopt_obj.db
+
+    # Check arguments
 
     if arg_db_insert and arg_db_update:
         print_error_exit(
