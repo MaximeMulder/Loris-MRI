@@ -77,10 +77,16 @@ def main():
             "value": None, "required": True, "expect_arg": True, "short_opt": "p", "is_path": False
         },
         "source": {
-            "value": True,  "required": True,  "expect_arg": True, "short_opt": "s", "is_path": True,
+            "value": None,  "required": True,  "expect_arg": True, "short_opt": "s", "is_path": True,
         },
         "target": {
-            "value": True,  "required": True,  "expect_arg": True, "short_opt": "t", "is_path": True,
+            "value": None,  "required": True,  "expect_arg": True, "short_opt": "t", "is_path": True,
+        },
+        "today": {
+            "value": False,  "required": False,  "expect_arg": False, "short_opt": "today", "is_path": False,
+        },
+        "year": {
+            "value": False,  "required": False,  "expect_arg": False, "short_opt": "year", "is_path": False,
         },
         "overwrite": {
             "value": False, "required": False, "expect_arg": False, "short_opt": "overwrite", "is_path": False,
@@ -105,14 +111,14 @@ def main():
     # Typed arguments
 
     arg_profile:   str | None = loris_getopt_obj.options_dict['profile']['value']
-    arg_source:    str        = loris_getopt_obj.options_dict['profile']['source']
-    arg_target:    str        = loris_getopt_obj.options_dict['profile']['target']
-    arg_verbose:   bool       = loris_getopt_obj.options_dict['profile']['verbose']
-    arg_today:     bool       = loris_getopt_obj.options_dict['profile']['today']
-    arg_year:      bool       = loris_getopt_obj.options_dict['profile']['year']
-    arg_overwrite: bool       = loris_getopt_obj.options_dict['profile']['overwrite']
-    arg_db_insert: bool       = loris_getopt_obj.options_dict['profile']['db-insert']
-    arg_db_update: bool       = loris_getopt_obj.options_dict['profile']['db-upload']
+    arg_source:    str        = loris_getopt_obj.options_dict['source']['value']
+    arg_target:    str        = loris_getopt_obj.options_dict['target']['value']
+    arg_today:     bool       = loris_getopt_obj.options_dict['today']['value']
+    arg_year:      bool       = loris_getopt_obj.options_dict['year']['value']
+    arg_overwrite: bool       = loris_getopt_obj.options_dict['overwrite']['value']
+    arg_db_insert: bool       = loris_getopt_obj.options_dict['db-insert']['value']
+    arg_db_update: bool       = loris_getopt_obj.options_dict['db-update']['value']
+    arg_verbose:   bool       = loris_getopt_obj.options_dict['verbose']['value']
 
     db = loris_getopt_obj.db
 
