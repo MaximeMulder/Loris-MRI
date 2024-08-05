@@ -8,9 +8,9 @@ class Patient:
     DICOM patient object, which contains information about a DICOM patient.
     """
 
-    id:        str
-    name:      str
-    sex:       str | None
+    id:         str
+    name:       str
+    sex:        str | None
     birth_date: date | None
 
 
