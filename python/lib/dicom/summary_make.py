@@ -5,6 +5,7 @@ import pydicom
 import pydicom.errors
 from lib.dicom.summary_type import Summary, Info, Patient, Scanner, Acquisition, DicomFile, OtherFile
 from lib.dicom.text import make_hash, read_dicom_date_none
+from lib.utilities import get_all_files
 
 
 def get_value(dicom: pydicom.Dataset, tag: str):
@@ -100,13 +101,13 @@ def make(dir_path: str, verbose: bool):
     other_files: list[OtherFile] = []
     acquis_dict: dict[tuple[int, int | None, str | None], Acquisition] = dict()
 
-    file_names = glob.glob('**/*', root_dir=dir_path, recursive=True)
-    for i, file_name in enumerate(file_names):
+    file_paths = get_all_files(dir_path)
+    for i, file_path in enumerate(file_paths):
         if verbose:
-            print(f'Processing file \'{file_name}\' ({i + 1}/{len(file_names)})')
+            print(f'Processing file \'{file_path}\' ({i + 1}/{len(file_paths)})')
 
         try:
-            dicom = pydicom.dcmread(dir_path + '/' + file_name)
+            dicom = pydicom.dcmread(dir_path + '/' + file_path)
             if info is None:
                 info = make_info(dicom)
 
@@ -121,7 +122,7 @@ def make(dir_path: str, verbose: bool):
 
             acquis_dict[(series, sequence, echo)].number_of_files += 1
         except pydicom.errors.InvalidDicomError:
-            other_files.append(make_other_file(dir_path + '/' + file_name))
+            other_files.append(make_other_file(dir_path + '/' + file_path))
 
     if info is None:
         raise Exception('Found no DICOM file in the directory.')
