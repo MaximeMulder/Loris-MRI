@@ -23,6 +23,9 @@ from lib.database_lib.mri_violations_log import MriViolationsLog
 from lib.database_lib.parameter_file import ParameterFile
 from lib.database_lib.parameter_type import ParameterType
 from lib.exception.determine_subject_exception import DetermineSubjectException
+from python.lib.dataclass.create_visit import CreateVisit
+from python.lib.dataclass.subject import Subject
+from python.lib.dataclass.subject_config import SubjectConfig
 
 __license__ = "GPLv3"
 
@@ -512,7 +515,7 @@ class Imaging:
         # return the result
         return results[0]['CandID'] if results else None
 
-    def determine_subject_ids(self, tarchive_info_dict, scanner_id: Optional[int] = None) -> dict[str, Any]:
+    def determine_subject_ids(self, tarchive_info_dict, scanner_id: Optional[int] = None) -> SubjectConfig:
         """
         Determine subject IDs based on the DICOM header specified by the lookupCenterNameUsing
         config setting. This function will call a function in the configuration file that can be
@@ -533,13 +536,13 @@ class Imaging:
         subject_name = tarchive_info_dict[dicom_header]
 
         try:
-            subject_id_dict = self.config_file.get_subject_ids(self.db, subject_name, scanner_id)
+            subject_dict = self.config_file.get_subject_ids(self.db, subject_name, scanner_id)
         except AttributeError:
             raise DetermineSubjectException(
                 'Config file does not contain a `get_subject_ids` function. Upload will exit now.'
             )
 
-        if subject_id_dict == {}:
+        if subject_dict == {}:
             raise DetermineSubjectException(
                 f'Cannot get subject IDs for subject \'{subject_name}\'.\n'
                 'Possible causes:\n'
@@ -548,8 +551,23 @@ class Imaging:
                 '- Other project specific reason.'
             )
 
-        subject_id_dict['PatientName'] = subject_name
-        return subject_id_dict
+        subject = Subject(
+            subject_name,
+            bool(subject_dict['isPhantom']),
+            subject_dict['PSCID'],
+            int(subject_dict['CandID']),
+            subject_dict['visitLabel'],
+        )
+
+        if subject_dict['createVisitLabel']:
+            create_visit = CreateVisit(
+                subject_dict['ProjectID'],
+                subject_dict['CohortID'],
+            )
+        else:
+            create_visit = None
+
+        return SubjectConfig(subject, create_visit)
 
     def map_bids_param_to_loris_param(self, file_parameters):
         """
